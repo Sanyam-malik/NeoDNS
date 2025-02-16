@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  neodns:
+    build: .
+    container_name: neodns
+    ports:
+      - "53:53/udp"  # Map UDP port 53 for DNS queries
+    volumes:
+      - ./config.yml:/app/config.yml  # Bind mount the config file
+    restart: always
+    networks:
+      - neodns_network
+
+networks:
+  neodns_network:
+    driver: bridge
