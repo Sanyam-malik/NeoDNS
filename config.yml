@@ -1,0 +1,18 @@
+special_domains:
+  "maxim.com":
+    ip: "maxim.local"
+    subdomains:
+      "unleash": "unleash.local"
+      "kafka": "kafka.local"
+      "postgres": "postgresql.local"
+      "mongodb": "mongodb.local"
+      "forgejo": "forgejo.local"
+      "jenkins": "jenkins.local"
+      "minio": "minio.local"
+      "redis": "redis.local"
+      "sonar": "sonarqube.local"
+      "keycloak": "keycloak.local"
+      "netflix": "netflix.local"
+      "prometheus": "prometheus.local"
+      "jaeger": "jaeger.local"
+      "omv": "omv.local"

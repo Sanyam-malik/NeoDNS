@@ -1,0 +1,4 @@
+dnspython
+flask
+waitress
+python-dotenv
