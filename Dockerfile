@@ -16,7 +16,10 @@ COPY . /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose port 53 for DNS traffic
-EXPOSE 53/udp
+EXPOSE 1053/udp
+
+# Expose port 53 for DNS traffic
+EXPOSE 8000/tcp
 
 # Start avahi-daemon in the background and run the Python DNS server
 CMD service avahi-daemon start && python dns_server.py
