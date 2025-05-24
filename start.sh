@@ -2,7 +2,13 @@
 set -ex
 
 dbus-daemon --session --print-address --fork
-avahi-daemon --daemonize
 
-# Run python and print errors
+# Run avahi-daemon in foreground for debugging
+avahi-daemon --no-daemon --debug &
+AVAHI_PID=$!
+
+# Run Python server in foreground
 exec python dns_server.py
+
+# Optionally wait for avahi if python exits (not usually needed)
+wait $AVAHI_PID
