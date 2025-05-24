@@ -4,7 +4,7 @@ set -ex
 dbus-daemon --session --print-address --fork
 
 # Run avahi-daemon in foreground for debugging
-avahi-daemon --no-daemon --debug &
+avahi-daemon --debug &
 AVAHI_PID=$!
 
 # Run Python server in foreground
