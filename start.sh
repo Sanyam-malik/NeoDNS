@@ -21,8 +21,8 @@ disable-publishing=no
 enable-reflector=no
 EOF
 
-# Start avahi-daemon with our generated config, in user-mode
-avahi-daemon --no-chroot --no-drop-root -c /etc/avahi/avahi-daemon.conf --debug &
+# Start avahi-daemon using the default config path
+avahi-daemon --no-chroot --no-drop-root --debug &
 
 # Run the Python DNS server
 exec python dns_server.py
