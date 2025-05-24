@@ -1,15 +1,14 @@
 #!/bin/bash
 set -e
 
-# Start private D-Bus session daemon and export its address
+# Correctly start dbus and set DBUS_SESSION_BUS_ADDRESS environment variable
 eval "$(dbus-daemon --session --print-address --fork)"
-echo "Started private D-Bus session bus: $DBUS_SESSION_BUS_ADDRESS"
+echo "D-Bus session bus started at: $DBUS_SESSION_BUS_ADDRESS"
 
-# Start avahi-daemon in user mode, tied to this session bus
+# Start avahi in user mode attached to that session bus
 avahi-daemon --no-chroot --no-drop-root --debug --config-file=/etc/avahi/avahi-daemon.conf &
 
-# Wait a moment for Avahi to initialize
 sleep 2
 
-# Run your Python DNS server
+# Run your python DNS server
 exec python dns_server.py
