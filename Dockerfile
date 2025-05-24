@@ -22,4 +22,4 @@ EXPOSE 1053/udp
 EXPOSE 8000/tcp
 
 # Start avahi-daemon in the background and run the Python DNS server
-CMD python dns_server.py
+CMD dbus-daemon --system & avahi-daemon --daemonize && python dns_server.py
