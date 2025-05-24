@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 
 # Start D-Bus session daemon and set environment variable correctly
 eval "$(dbus-daemon --session --print-address --fork)"
