@@ -9,7 +9,7 @@ on:
 
 env:
   DOCKER_REGISTRY: registry.local
-  DOCKER_IMAGE: mockplant
+  DOCKER_IMAGE: neodns
   DOCKER_TAG: latest
 
 jobs:
