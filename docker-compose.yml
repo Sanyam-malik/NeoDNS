@@ -7,7 +7,8 @@ services:
     ports:
       - "53:53/udp"  # Map UDP port 53 for DNS queries
     volumes:
-      - ./config.json:/app/config.json  # Bind mount the config file
+      - /var/run/dbus:/var/run/dbus
+      - /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket
     restart: always
     networks:
       - neodns_network
