@@ -21,9 +21,5 @@ RUN chmod +x /app/start.sh
 # Install necessary Python packages
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose ports
-EXPOSE 1053/udp
-EXPOSE 8000/tcp
-
 # Use the startup script as the container entrypoint
 CMD ["/app/start.sh"]
