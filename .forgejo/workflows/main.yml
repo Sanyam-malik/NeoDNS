@@ -1,0 +1,40 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - release
+  schedule:
+    - cron: '*/5 * * * *'  # Optional: polling every 5 minutes
+
+env:
+  DOCKER_REGISTRY: registry.local
+  DOCKER_IMAGE: mockplant
+  DOCKER_TAG: latest
+
+jobs:
+  build:
+    runs-on: docker
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Build Docker Image
+        run: |
+          docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG} .
+
+      - name: Push Docker Image
+        run: |
+          docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG}
+
+      - name: Pull Image to Verify
+        run: |
+          docker pull ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG}
+
+      - name: Cleanup Docker
+        if: always()
+        run: |
+          docker system prune -af || true
