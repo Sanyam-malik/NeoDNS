@@ -6,8 +6,6 @@ on:
       - main
       - dev
       - release
-  schedule:
-    - cron: '*/5 * * * *'  # Optional: polling every 5 minutes
 
 env:
   DOCKER_REGISTRY: registry.local
