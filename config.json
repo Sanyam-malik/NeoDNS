@@ -1,6 +1,7 @@
 {
   "resolvers": [
-    "8.8.8.8"
+    "8.8.8.8",
+    "1.1.1.1"
   ],
   "domains": {
     "maxim.com": {
@@ -8,8 +9,6 @@
       "subdomains": {
         "unleash": "unleash.local",
         "kafka": "kafka.local",
-        "postgres": "postgresql.local",
-        "mongodb": "mongodb.local",
         "forgejo": "forgejo.local",
         "jenkins": "jenkins.local",
         "minio": "minio.local",
@@ -20,7 +19,8 @@
         "prometheus": "prometheus.local",
         "jaeger": "jaeger.local",
         "omv": "omv.local",
-        "*": "registry.local"
+        "*": "registry.local",
+        "database": "database.local"
       }
     }
   }

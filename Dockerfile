@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Install necessary dependencies
 RUN apt-get update && \
-    apt-get install -y avahi-daemon avahi-utils dbus && \
+    apt-get install -y avahi-daemon avahi-utils dbus iputils-ping && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy the current directory contents into the container at /app

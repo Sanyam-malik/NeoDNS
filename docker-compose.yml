@@ -5,7 +5,8 @@ services:
     build: .
     container_name: neodns
     ports:
-      - "53:53/udp"  # Map UDP port 53 for DNS queries
+      - "53:1053/udp"
+      - "80:8000"
     volumes:
       - /var/run/dbus:/var/run/dbus
       - /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket
