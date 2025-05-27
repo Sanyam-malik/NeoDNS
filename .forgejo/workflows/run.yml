@@ -3,7 +3,7 @@ name: Build Docker Image and Upload to Gitea Asset
 on:
   push:
     branches:
-      - main
+      - mains
 
 jobs:
   build:
