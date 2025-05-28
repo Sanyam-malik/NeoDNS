@@ -10,7 +10,7 @@ from waitress import serve
 from dotenv import load_dotenv
 
 import config_service
-import dns_service
+from services import dns_service
 import sqlite_database
 
 # Load environment variables from .env file

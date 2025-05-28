@@ -4,13 +4,19 @@ import sqlite3
 import time
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
+DNS_CACHE = bool(True if os.getenv("CACHE", "false") == "true" else False)
 # SQLite database name
 DB_NAME = 'dns_resolutions.db'
 
 
 def create_db():
     """Create or recreate the SQLite database and table."""
+    if DNS_CACHE:
+        logging.debug("DNS Caching is enabled...(create_db)")
+    else:
+        logging.debug("DNS Caching is disabled...(create_db)")
+        return
+
     logging.debug(f"Creating/recreating database: {DB_NAME}")
     if os.path.exists(DB_NAME):
         os.remove(DB_NAME)  # Remove the existing DB if it exists
@@ -33,6 +39,12 @@ def create_db():
 
 def get_ip_from_db(domain, subdomain=None):
     """Retrieve IP from the SQLite database."""
+    if DNS_CACHE:
+        logging.debug("DNS Caching is enabled...(get_ip_from_db)")
+    else:
+        logging.debug("DNS Caching is disabled...(get_ip_from_db)")
+        return None
+
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     if subdomain:
@@ -49,6 +61,12 @@ def get_ip_from_db(domain, subdomain=None):
 
 def store_ip_in_db(domain, subdomain, ip):
     """Store the IP resolution in the SQLite database with the current timestamp."""
+    if DNS_CACHE:
+        logging.debug("DNS Caching is enabled...(store_ip_in_db)")
+    else:
+        logging.debug("DNS Caching is disabled...(store_ip_in_db)")
+        return
+
     timestamp = int(time.time())  # Get current time in seconds since the epoch
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -80,6 +98,12 @@ def store_ip_in_db(domain, subdomain, ip):
 
 def check_if_resolution_valid(domain, subdomain=None):
     """Check the timestamp and remove entry if older than 5 minutes."""
+    if DNS_CACHE:
+        logging.debug("DNS Caching is enabled...(check_if_resolution_valid)")
+    else:
+        logging.debug("DNS Caching is disabled...(check_if_resolution_valid)")
+        return False
+
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     five_minutes = 5 * 60  # 5 minutes in seconds
