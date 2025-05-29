@@ -84,33 +84,25 @@ sudo systemctl restart avahi-daemon
 ## Configuring Endpoints in config.yml
 
 You can configure domain mappings and their associated subdomains by adding them to the config.yml file. This allows you to map special domains to local IPs and configure specific subdomains for each service.
-```json
-{
-  "resolvers": [
-    "8.8.8.8"
-  ],
-  "domains": {
-    "maxim.com": {
-      "ip": "maxim.local",
-      "subdomains": {
-        "unleash": "unleash.local",
-        "kafka": "kafka.local",
-        "postgres": "postgresql.local",
-        "mongodb": "mongodb.local",
-        "forgejo": "forgejo.local",
-        "jenkins": "jenkins.local",
-        "minio": "minio.local",
-        "redis": "redis.local",
-        "sonar": "sonarqube.local",
-        "keycloak": "keycloak.local",
-        "netflix": "netflix.local",
-        "prometheus": "prometheus.local",
-        "jaeger": "jaeger.local",
-        "omv": "omv.local"
-      }
-    }
-  }
-}
+```yml
+special_domains:
+  "maxim.com":
+    ip: "maxim.local"
+    subdomains:
+      "unleash": "unleash.local"
+      "kafka": "kafka.local"
+      "postgres": "postgresql.local"
+      "mongodb": "mongodb.local"
+      "forgejo": "forgejo.local"
+      "jenkins": "jenkins.local"
+      "minio": "minio.local"
+      "redis": "redis.local"
+      "sonar": "sonarqube.local"
+      "keycloak": "keycloak.local"
+      "netflix": "netflix.local"
+      "prometheus": "prometheus.local"
+      "jaeger": "jaeger.local"
+      "omv": "omv.local"
 ```
 
 ```bash
