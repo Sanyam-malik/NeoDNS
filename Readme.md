@@ -68,11 +68,23 @@ networks:
 
 ### Avahi is Returning IPv6 address
 
-Docker containers use IPv4 address by default if Avahi retutns Ipv6 address it will not be resolved
+Docker containers use IPv4 address by default if Avahi returns Ipv6 address it will not be resolved
 So, To force Avahi use Ipv4 run this:
 
 ```bash
-sudo sed -i '/^use-ipv6=/c\use-ipv6=no' /etc/avahi/avahi-daemon.conf && sudo systemctl restart avahi-daemon
+sudo sed -i '/^use-ipv6=/c\use-ipv6=no' /etc/avahi/avahi-daemon.conf && \
+sudo awk 'BEGIN {publish=0}
+  /^\[publish\]/ {print; publish=1; next}
+  /^\[/ && !/^\[publish\]/ {publish=0}
+  publish && /^publish-a-on-ipv6=/ {next}
+  publish && /^publish-aaaa-on-ipv4=/ {next}
+  {print}
+  END {
+    if (!found_a) print "publish-a-on-ipv6=no"
+    if (!found_aaaa) print "publish-aaaa-on-ipv4=no"
+  }' /etc/avahi/avahi-daemon.conf > /tmp/avahi.tmp && \
+sudo mv /tmp/avahi.tmp /etc/avahi/avahi-daemon.conf && \
+sudo systemctl restart avahi-daemon
 ```
 
 
