@@ -38,7 +38,8 @@ docker build -t neodns:latest
 docker run -d \
   --name neodns \
   --restart always \
-  -p 53:53/udp \
+  -p 53:1053/udp \
+  -p 80:8000 \
   -v ./config.json:/app/config.json \
   neodns:latest
 ```
@@ -52,7 +53,8 @@ services:
     build: .
     container_name: neodns
     ports:
-      - "53:53/udp"
+      - "53:1053/udp"
+      - "80:8000"
     volumes:
       - ./config.json:/app/config.json
     restart: always
@@ -68,7 +70,7 @@ networks:
 
 ### Avahi is Returning IPv6 address
 
-Docker containers use IPv4 address by default if Avahi returns Ipv6 address it will not be resolved
+Docker containers use IPv4 address by default if Avahi retutns Ipv6 address it will not be resolved
 So, To force Avahi use Ipv4 run this:
 
 ```bash
@@ -84,25 +86,33 @@ sudo systemctl restart avahi-daemon
 ## Configuring Endpoints in config.yml
 
 You can configure domain mappings and their associated subdomains by adding them to the config.yml file. This allows you to map special domains to local IPs and configure specific subdomains for each service.
-```yml
-special_domains:
-  "maxim.com":
-    ip: "maxim.local"
-    subdomains:
-      "unleash": "unleash.local"
-      "kafka": "kafka.local"
-      "postgres": "postgresql.local"
-      "mongodb": "mongodb.local"
-      "forgejo": "forgejo.local"
-      "jenkins": "jenkins.local"
-      "minio": "minio.local"
-      "redis": "redis.local"
-      "sonar": "sonarqube.local"
-      "keycloak": "keycloak.local"
-      "netflix": "netflix.local"
-      "prometheus": "prometheus.local"
-      "jaeger": "jaeger.local"
-      "omv": "omv.local"
+```json
+{
+  "resolvers": [
+    "8.8.8.8"
+  ],
+  "domains": {
+    "maxim.com": {
+      "ip": "maxim.local",
+      "subdomains": {
+        "unleash": "unleash.local",
+        "kafka": "kafka.local",
+        "postgres": "postgresql.local",
+        "mongodb": "mongodb.local",
+        "forgejo": "forgejo.local",
+        "jenkins": "jenkins.local",
+        "minio": "minio.local",
+        "redis": "redis.local",
+        "sonar": "sonarqube.local",
+        "keycloak": "keycloak.local",
+        "netflix": "netflix.local",
+        "prometheus": "prometheus.local",
+        "jaeger": "jaeger.local",
+        "omv": "omv.local"
+      }
+    }
+  }
+}
 ```
 
 ```bash

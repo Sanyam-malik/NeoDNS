@@ -9,12 +9,19 @@ from dotenv import load_dotenv
 load_dotenv()
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-DNS_CACHE = bool(True if os.getenv("CACHE", "false").lower() == "true" else False)
+DNS_CACHE = bool(True if os.getenv("CACHE", "true").lower() == "true" else False)
 # SQLite database name
 DB_NAME = 'dns_resolutions.db'
 
 def exists_db():
     return True if os.path.exists(DB_NAME) else False
+
+def delete_db():
+    if exists_db():
+        os.remove(DB_NAME)
+        return True
+    return False
+
 
 def create_db():
     """Create or recreate the SQLite database and table."""

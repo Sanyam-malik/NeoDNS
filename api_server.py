@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 
 import config_service
 import dns_server
+import sqlite_database
 
 # Load environment variables from .env file
 load_dotenv()
@@ -187,6 +188,8 @@ def reload_dns():
 # Graceful shutdown
 def shutdown_handler(*args):
     logging.debug("Shutting down Flask and DNS server...")
+    if sqlite_database.delete_db():
+        logging.debug("Cleared DNS Cache....")
     dns_server.stop_dns_server_thread()
     sys.exit(0)
 
