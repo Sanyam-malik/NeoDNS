@@ -7,7 +7,7 @@ on:
 
 env:
   DOCKER_REGISTRY: registry.local
-  DOCKER_IMAGE: neoweb
+  DOCKER_IMAGE: neodns
 
 jobs:
   version-bump:
