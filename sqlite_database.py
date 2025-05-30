@@ -3,11 +3,18 @@ import os
 import sqlite3
 import time
 
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-DNS_CACHE = bool(True if os.getenv("CACHE", "false") == "true" else False)
+DNS_CACHE = bool(True if os.getenv("CACHE", "false").lower() == "true" else False)
 # SQLite database name
 DB_NAME = 'dns_resolutions.db'
 
+def exists_db():
+    return True if os.path.exists(DB_NAME) else False
 
 def create_db():
     """Create or recreate the SQLite database and table."""
@@ -45,6 +52,9 @@ def get_ip_from_db(domain, subdomain=None):
         logging.debug("DNS Caching is disabled...(get_ip_from_db)")
         return None
 
+    if exists_db() is False:
+        create_db()
+
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     if subdomain:
@@ -66,6 +76,9 @@ def store_ip_in_db(domain, subdomain, ip):
     else:
         logging.debug("DNS Caching is disabled...(store_ip_in_db)")
         return
+
+    if exists_db() is False:
+        create_db()
 
     timestamp = int(time.time())  # Get current time in seconds since the epoch
     conn = sqlite3.connect(DB_NAME)
@@ -103,6 +116,9 @@ def check_if_resolution_valid(domain, subdomain=None):
     else:
         logging.debug("DNS Caching is disabled...(check_if_resolution_valid)")
         return False
+
+    if exists_db() is False:
+        create_db()
 
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()

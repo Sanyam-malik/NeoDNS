@@ -2,12 +2,14 @@ import json
 import logging
 
 
-def load_config(config_file="config.json"):
-    logging.debug(f"Loading configuration from {config_file}")
+def load_config(config_file="config.json", logs=True):
+    if logs:
+        logging.debug(f"Loading configuration from {config_file}")
     try:
         with open(config_file, 'r') as file:
             config = json.load(file)
-            logging.info("Configuration loaded successfully.")
+            if logs:
+                logging.info("Configuration loaded successfully.")
             return config
     except Exception as e:
         logging.error(f"Failed to load configuration: {e}")

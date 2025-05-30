@@ -1,7 +1,4 @@
-import platform
 import random
-import socket
-import subprocess
 import threading
 import dns.resolver
 import dns.message
@@ -90,6 +87,6 @@ def resolve_dns_entry(qname, query, config):
         ip = get_ip_or_domain(qname)
         resolvers = config.get("resolvers", [DEFAULT_DNS_RESOLVER])
         resolver_ip = random.choice(resolvers) if resolvers else DEFAULT_DNS_RESOLVER
-        response = dns.query.udp(query, resolver_ip)
+        response = dns.query.udp(query, resolver_ip, timeout=3)
         threading.Thread(target=sqlite_database.store_ip_in_db, args=(domain, subdomain, ip)).start()
     return response

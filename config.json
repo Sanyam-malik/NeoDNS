@@ -22,6 +22,10 @@
         "*": "registry.local",
         "database": "database.local"
       }
+    },
+    "netflix.com": {
+      "ip": "maxim.local",
+      "subdomains": {}
     }
   }
 }
