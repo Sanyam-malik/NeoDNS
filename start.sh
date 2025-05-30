@@ -2,4 +2,4 @@
 set -e
 
 # Run the Python DNS server
-exec python dns_server.py
+exec python api_server.py
