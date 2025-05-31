@@ -183,6 +183,7 @@ def start_api_server(host='0.0.0.0', port=API_PORT):
 
 def reload_dns():
     if dns_server.reload_dns_server_thread():
+        sqlite_database.delete_db()
         logging.debug("DNS Server Status: Restarted")
 
 # Graceful shutdown
