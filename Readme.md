@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="static/images/logo.png" alt="NeoDNS Logo" width="300"/>
+</div>
+
 # NeoDNS
 
 NeoDNS is a DNS service designed to allow external applications and servers to seamlessly connect inside Docker containers. This service simplifies the process of configuring DNS for containers, enabling them to interact with external services or resolve domain names effortlessly. NeoDNS leverages Docker's networking capabilities to create a smooth and flexible solution for containerized environments.
@@ -29,7 +33,7 @@ cd NeoDNS
 ```
 
 ### 2. Docker Configuration
-Make sure to configure your Docker container’s DNS settings to point to the NeoDNS service. You can either do this in your Docker container's configuration file or use Docker Compose.
+Make sure to configure your Docker container's DNS settings to point to the NeoDNS service. You can either do this in your Docker container's configuration file or use Docker Compose.
 
 Example Docker run command:
 
@@ -56,7 +60,8 @@ services:
       - "53:1053/udp"
       - "80:8000"
     volumes:
-      - ./config.json:/app/config.json
+      - /var/run/dbus:/var/run/dbus
+      - /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket
     restart: always
     networks:
       - neodns_network
@@ -128,3 +133,8 @@ Here maxim.local and postgresql.local are set to dhcp network mode instead of st
 
 By using this dns service we can also resolve netflix.com -> bing.com
 
+## Screenshots
+
+<div align="center">
+  <img src="static/images/screenshots/1.png"/>
+</div>
