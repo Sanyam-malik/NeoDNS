@@ -7,7 +7,7 @@ on:
 
 env:
   DOCKER_REGISTRY: sanyammalik
-  DOCKER_IMAGE: mockplant
+  DOCKER_IMAGE: neodns
 
 jobs:
   version-bump:
