@@ -10,7 +10,7 @@ env:
   DOCKER_IMAGE: neodns
 
 jobs:
-version-bump:
+  version-bump:
     name: Bump Version and Tag
     runs-on: neo-ubuntu
     outputs:
