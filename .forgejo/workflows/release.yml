@@ -35,18 +35,18 @@ jobs:
         env:
           GIT_USER: '${{ vars.FORGEJO_USER }}'
           GIT_PASS: '${{ secrets.FORGEJO_TOKEN }}'
-        run: >
+        run: |
           curl -fsSL -u $GIT_USER:$GIT_PASS http://forgejo.local/Neo/VersionCI/raw/branch/main/install.sh -o ./install.sh
           sudo chmod +x install.sh
           sudo GIT_USER="$GIT_USER" GIT_PASS="$GIT_PASS" ./install.sh 1
 
       - name: Bump Version using VersionCI
         id: bump
-        run: >
+        run: |
           vercli --host http://versionci.local:8000 bump NeoDNS release --strategy increment --commit ${{ steps.get_commit.outputs.commit_hash }}
 
       - name: Fetch New Version
-        run: >
+        run: |
           NEW_VERSION=$(vercli --host http://versionci.local:8000 get-version NeoDNS release)
           echo "new_tag=v$NEW_VERSION"
           echo "new_tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
@@ -85,12 +85,12 @@ jobs:
             echo "Trivy scan found vulnerabilities. Review above results."
 
       - name: Push Docker Images
-        run: >
+        run: |
           docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:latest
           docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${{ needs.version-bump.outputs.new_tag }}
 
       - name: Pull Image to Verify
-        run: >
+        run: |
           docker pull ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${{ needs.version-bump.outputs.new_tag }}
 
       - name: Cleanup Docker
