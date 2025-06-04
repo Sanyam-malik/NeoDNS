@@ -15,37 +15,38 @@ jobs:
     runs-on: neo-ubuntu
     outputs:
       new_tag: ${{ steps.bump.outputs.new_tag }}
+      commit_hash: ${{ steps.get_commit.outputs.commit_hash }}
 
     steps:
       - name: Setup DNS
         run: |
           echo "nameserver 10.60.1.2" > /etc/resolv.conf
-          echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+          echo "nameserver 8.8.8.8" >> /etc/resolv.conf          
 
       - name: Checkout Code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
+      - name: Get Commit Hash
+        id: get_commit
+        run: echo "commit_hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
       - name: Install VersionCI
         env:
-            GIT_USER: ${{ vars.FORGEJO_USER }}
-            GIT_PASS: ${{ secrets.FORGEJO_TOKEN }}
+          GIT_USER: ${{ vars.FORGEJO_USER }}
+          GIT_PASS: ${{ secrets.FORGEJO_TOKEN }}
         run: |
           curl -fsSL -u $GIT_USER:$GIT_PASS \
             http://forgejo.local/Neo/VersionCI/raw/branch/main/install.sh -o install.sh
           chmod +x install.sh
-          sudo GIT_USER="$GIT_USER" GIT_PASS="$GIT_PASS" ./install.sh 1
+          sudo GIT_USER="$GIT_USER" GIT_PASS="$GIT_PASS" ./install.sh 1          
 
       - name: Bump Version using VersionCI
-        run: |
-          vercli --api-base http://versionci.local:8000 bump NeoDNS main --strategy increment
-
-      - name: Fetch New Version
         id: bump
         run: |
-          NEW_VERSION=$(vercli --api-base http://versionci.local:8000 get-version NeoDNS main)
-          echo "new_tag=v$NEW_VERSION"
+          vercli --host http://versionci.local:8000 bump NeoDNS main --strategy increment --commit ${{ steps.get_commit.outputs.commit_hash }}
+          NEW_VERSION=$(vercli --host http://versionci.local:8000 get-version NeoDNS main | head -n1)
           echo "new_tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
 
   docker-build:
@@ -57,7 +58,7 @@ jobs:
       - name: Setup DNS
         run: |
           echo "nameserver 10.60.1.2" > /etc/resolv.conf
-          echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+          echo "nameserver 8.8.8.8" >> /etc/resolv.conf          
 
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -65,16 +66,16 @@ jobs:
       - name: Build Docker Image
         run: |
           docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:latest \
-                       -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${{ needs.version-bump.outputs.new_tag }} .
+                       -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${{ needs.version-bump.outputs.new_tag }} .          
 
       - name: Push Docker Images
         run: |
           docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:latest
-          docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${{ needs.version-bump.outputs.new_tag }}
+          docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${{ needs.version-bump.outputs.new_tag }}          
 
       - name: Pull Image to Verify
         run: |
-          docker pull ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${{ needs.version-bump.outputs.new_tag }}
+          docker pull ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${{ needs.version-bump.outputs.new_tag }}          
 
       - name: Cleanup Docker
         if: always()
