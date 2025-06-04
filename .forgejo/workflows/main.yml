@@ -3,7 +3,7 @@ name: Build Docker Image
 on:
   push:
     branches:
-      - mains
+      - main
 
 env:
   DOCKER_REGISTRY: registry.local
@@ -20,58 +20,33 @@ jobs:
       - name: Setup DNS
         run: |
           echo "nameserver 10.60.1.2" > /etc/resolv.conf
-          echo "nameserver 8.8.8.8" >> /etc/resolv.conf          
+          echo "nameserver 8.8.8.8" >> /etc/resolv.conf
 
       - name: Checkout Code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Read and Bump Version (2-digit)
+      - name: Install VersionCI
+        env:
+            GIT_USER: ${{ vars.FORGEJO_USER }}
+            GIT_PASS: ${{ secrets.FORGEJO_TOKEN }}
+        run: |
+          curl -fsSL -u $GIT_USER:$GIT_PASS \
+            http://forgejo.local/Neo/VersionCI/raw/branch/main/install.sh -o install.sh
+          chmod +x install.sh
+          sudo GIT_USER="$GIT_USER" GIT_PASS="$GIT_PASS" ./install.sh 1
+
+      - name: Bump Version using VersionCI
+        run: |
+          vercli --api-base http://versionci.local:8000 bump NeoDNS main --strategy increment
+
+      - name: Fetch New Version
         id: bump
         run: |
-          VERSION_FILE="VERSION"
-
-          if [ ! -f "$VERSION_FILE" ]; then
-            echo "VERSION file not found. Creating with version 1.0"
-            echo "1.0" > "$VERSION_FILE"
-            NEW_VERSION="1.0"
-          else
-            CURRENT_VERSION=$(cat "$VERSION_FILE")
-            echo "Current version: $CURRENT_VERSION"
-
-            IFS='.' read -r MAJOR MINOR <<< "$CURRENT_VERSION"
-            MINOR=$((MINOR + 1))
-            NEW_VERSION="${MAJOR}.${MINOR}"
-            echo "$NEW_VERSION" > "$VERSION_FILE"
-          fi
-
-          echo "New version: $NEW_VERSION"
-          echo "new_tag=v$NEW_VERSION" >> $GITHUB_OUTPUT          
-
-      - name: Commit and Tag New Version
-        env:
-          FORGEJO_USER: ${{ vars.FORGEJO_USER }}
-          FORGEJO_EMAIL: ${{ vars.FORGEJO_EMAIL }}
-          FORGEJO_TOKEN: ${{ secrets.FORGEJO_TOKEN }}
-        run: |
-          if [ -z "$FORGEJO_USER" ] || [ -z "$FORGEJO_EMAIL" ]; then
-            echo "Missing FORGEJO_USER or FORGEJO_EMAIL secrets. Aborting."
-            exit 1
-          fi
-          
-          git config user.name "${FORGEJO_USER}"
-          git config user.email "${FORGEJO_EMAIL}"
-
-          # Get current remote URL and inject credentials (http or https)
-          CURRENT_REMOTE=$(git remote get-url origin)
-          AUTH_REMOTE=$(echo "$CURRENT_REMOTE" | sed -E "s#(https?://)#\1${FORGEJO_USER}:${FORGEJO_TOKEN}@#")
-          git remote set-url origin "$AUTH_REMOTE"
-
-          git add VERSION
-          git commit -m "chore: bump version to ${{ steps.bump.outputs.new_tag }}"
-          git tag ${{ steps.bump.outputs.new_tag }}
-          git push origin main --follow-tags          
+          NEW_VERSION=$(vercli --api-base http://versionci.local:8000 get-version NeoDNS main)
+          echo "new_tag=v$NEW_VERSION"
+          echo "new_tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
 
   docker-build:
     name: Build and Push Docker Image
@@ -82,7 +57,7 @@ jobs:
       - name: Setup DNS
         run: |
           echo "nameserver 10.60.1.2" > /etc/resolv.conf
-          echo "nameserver 8.8.8.8" >> /etc/resolv.conf          
+          echo "nameserver 8.8.8.8" >> /etc/resolv.conf
 
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -90,18 +65,18 @@ jobs:
       - name: Build Docker Image
         run: |
           docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:latest \
-                       -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${{ needs.version-bump.outputs.new_tag }} .          
+                       -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${{ needs.version-bump.outputs.new_tag }} .
 
       - name: Push Docker Images
         run: |
           docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:latest
-          docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${{ needs.version-bump.outputs.new_tag }}          
+          docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${{ needs.version-bump.outputs.new_tag }}
 
       - name: Pull Image to Verify
         run: |
-          docker pull ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${{ needs.version-bump.outputs.new_tag }}          
+          docker pull ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${{ needs.version-bump.outputs.new_tag }}
 
       - name: Cleanup Docker
         if: always()
         run: |
-          docker system prune -af || true          
+          docker system prune -af || true
