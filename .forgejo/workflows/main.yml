@@ -46,7 +46,7 @@ jobs:
         id: bump
         run: |
           vercli --host http://versionci.local:8000 bump NeoDNS main --strategy increment --commit ${{ steps.get_commit.outputs.commit_hash }}
-          NEW_VERSION=$(vercli --host http://versionci.local:8000 get-version NeoDNS main | head -n1)
+          NEW_VERSION=$(vercli --host http://versionci.local:8000 get-version NeoDNS main)
           echo "new_tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
 
   docker-build:
