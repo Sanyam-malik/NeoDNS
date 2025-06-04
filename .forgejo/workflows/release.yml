@@ -34,8 +34,7 @@ jobs:
           1          
       - name: Bump Version using VersionCI
         run: >
-          vercli --api-base http://versionci.local:8000 bump NeoDNS release
-          --strategy increment          
+          vercli --api-base http://versionci.local:8000 bump NeoDNS release --strategy increment          
       - name: Fetch New Version
         id: bump
         run: >
