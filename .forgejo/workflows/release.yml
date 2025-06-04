@@ -16,11 +16,12 @@ jobs:
     outputs:
       new_tag: ${{ steps.bump.outputs.new_tag }}
       commit_hash: ${{ steps.get_commit.outputs.commit_hash }}
+
     steps:
       - name: Setup DNS
         run: |
           echo "nameserver 10.60.1.2" > /etc/resolv.conf
-          echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+          echo "nameserver 8.8.8.8" >> /etc/resolv.conf                    
 
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -33,24 +34,22 @@ jobs:
 
       - name: Install VersionCI
         env:
-          GIT_USER: '${{ vars.FORGEJO_USER }}'
-          GIT_PASS: '${{ secrets.FORGEJO_TOKEN }}'
+          GIT_USER: ${{ vars.FORGEJO_USER }}
+          GIT_PASS: ${{ secrets.FORGEJO_TOKEN }}
         run: |
-          curl -fsSL -u $GIT_USER:$GIT_PASS http://forgejo.local/Neo/VersionCI/raw/branch/main/install.sh -o ./install.sh
-          sudo chmod +x install.sh
-          sudo GIT_USER="$GIT_USER" GIT_PASS="$GIT_PASS" ./install.sh 1
+          curl -fsSL -u $GIT_USER:$GIT_PASS \
+            http://forgejo.local/Neo/VersionCI/raw/branch/main/install.sh -o install.sh
+          chmod +x install.sh
+          sudo GIT_USER="$GIT_USER" GIT_PASS="$GIT_PASS" ./install.sh 1                    
 
       - name: Bump Version using VersionCI
         id: bump
         run: |
-          vercli --host http://versionci.local:8000 bump NeoDNS release --strategy increment --commit ${{ steps.get_commit.outputs.commit_hash }}
+          vercli --host http://versionci.local:8000 bump NeoDNS main --strategy increment --commit ${{ steps.get_commit.outputs.commit_hash }}
+          NEW_VERSION=$(vercli --host http://versionci.local:8000 get-version NeoDNS main)
+          echo "new_tag=v$NEW_VERSION" >> $GITHUB_OUTPUT 
 
-      - name: Fetch New Version
-        run: |
-          NEW_VERSION=$(vercli --host http://versionci.local:8000 get-version NeoDNS release)
-          echo "new_tag=v$NEW_VERSION"
-          echo "new_tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
-
+          
   docker-build:
     name: Build and Push Docker Image
     runs-on: neo-ubuntu
