@@ -41,6 +41,8 @@ jobs:
           NEW_VERSION=$(vercli --api-base http://versionci.local:8000 get-version NeoDNS release)
 
           echo "new_tag=v$NEW_VERSION"
+
+          echo "new_tag=v$NEW_VERSION" >> $GITHUB_OUTPUT 
   docker-build:
     name: Build and Push Docker Image
     runs-on: neo-ubuntu
