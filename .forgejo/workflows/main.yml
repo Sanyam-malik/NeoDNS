@@ -27,7 +27,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install vercli
+      - name: Install VersionCI
         env:
             GIT_USER: ${{ vars.FORGEJO_USER }}
             GIT_PASS: ${{ secrets.FORGEJO_TOKEN }}
@@ -37,7 +37,7 @@ jobs:
           chmod +x install.sh
           sudo GIT_USER="$GIT_USER" GIT_PASS="$GIT_PASS" ./install.sh 1
 
-      - name: Bump Version using vercli
+      - name: Bump Version using VersionCI
         run: |
           vercli --api-base http://versionci.local:8000 bump NeoDNS main --strategy increment
 
