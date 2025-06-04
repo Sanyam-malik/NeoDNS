@@ -35,7 +35,7 @@ jobs:
           curl -fsSL -u $GIT_USER:$GIT_PASS \
             http://forgejo.local/Neo/VersionCI/raw/branch/main/install.sh -o install.sh
           chmod +x install.sh
-          sudo ./install.sh 1
+          sudo GIT_USER="$GIT_USER" GIT_PASS="$GIT_PASS" ./install.sh 1
 
       - name: Bump Version using vercli
         run: |
