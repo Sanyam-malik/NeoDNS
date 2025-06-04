@@ -48,29 +48,6 @@ jobs:
           echo "new_tag=v$NEW_VERSION"
           echo "new_tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Commit and Tag New Version
-        env:
-          FORGEJO_USER: ${{ vars.FORGEJO_USER }}
-          FORGEJO_EMAIL: ${{ vars.FORGEJO_EMAIL }}
-          FORGEJO_TOKEN: ${{ secrets.FORGEJO_TOKEN }}
-        run: |
-          if [ -z "$FORGEJO_USER" ] || [ -z "$FORGEJO_EMAIL" ]; then
-            echo "Missing FORGEJO_USER or FORGEJO_EMAIL secrets. Aborting."
-            exit 1
-          fi
-
-          git config user.name "${FORGEJO_USER}"
-          git config user.email "${FORGEJO_EMAIL}"
-
-          # Inject credentials into remote URL
-          CURRENT_REMOTE=$(git remote get-url origin)
-          AUTH_REMOTE=$(echo "$CURRENT_REMOTE" | sed -E "s#(https?://)#\1${FORGEJO_USER}:${FORGEJO_TOKEN}@#")
-          git remote set-url origin "$AUTH_REMOTE"
-
-          git commit --allow-empty -m "chore: bump version to ${{ steps.bump.outputs.new_tag }}"
-          git tag ${{ steps.bump.outputs.new_tag }}
-          git push origin main --follow-tags
-
   docker-build:
     name: Build and Push Docker Image
     runs-on: neo-ubuntu
