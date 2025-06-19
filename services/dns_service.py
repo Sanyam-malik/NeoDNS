@@ -1,4 +1,3 @@
-import random
 import threading
 import dns.resolver
 import dns.message
@@ -34,7 +33,7 @@ def handle_dns_query(data, client_address, config):
                 response = resolve_mdns(config_data["ip"], query, domain)
                 return response.to_wire()
             else:
-                response = create_dns_entry(config_data["ip"], query, domain)
+                response = create_dns_entry([config_data["ip"]], query, domain)
                 return response.to_wire()
 
         if qname.endswith('.' + domain):
@@ -46,7 +45,7 @@ def handle_dns_query(data, client_address, config):
                     response = resolve_mdns(config_data['subdomains'][subdomain], query, domain, subdomain)
                     return response.to_wire()
                 else:
-                    response = create_dns_entry(config_data['subdomains'][subdomain], query, domain, subdomain)
+                    response = create_dns_entry([config_data['subdomains'][subdomain]], query, domain, subdomain)
                     return response.to_wire()
             else:
                 if "*" in config_data['subdomains']:
@@ -56,7 +55,7 @@ def handle_dns_query(data, client_address, config):
                         response = resolve_mdns(config_data['subdomains']['*'], query, domain, subdomain)
                         return response.to_wire()
                     else:
-                        response = create_dns_entry(config_data['subdomains']['*'], query, domain, subdomain)
+                        response = create_dns_entry([config_data['subdomains']['*']], query, domain, subdomain)
                         return response.to_wire()
 
     try:
@@ -72,21 +71,43 @@ def handle_dns_query(data, client_address, config):
 def resolve_dns_entry(qname, query, config):
     subdomain, domain = separate_domain_and_subdomain(qname)
     use_mdns = qname.endswith('.local')
-    # Check For Cache
-    if sqlite_database.check_if_resolution_valid(domain, subdomain):
-        ip = sqlite_database.get_ip_from_db(domain, subdomain)
-        if use_mdns:
-            response = create_mdns_entry(ip, query, domain, subdomain)
+    # Determine query types requested
+    query_types = [q.rdtype for q in query.question]
+    responses = []
+    for qtype in query_types:
+        record_type = dns.rdatatype.to_text(qtype)
+        # Check For Cache
+        if sqlite_database.check_if_resolution_valid(domain, subdomain, record_type):
+            ips = sqlite_database.get_ips_from_db(domain, subdomain, record_type)
+            if use_mdns:
+                for ip in ips:
+                    responses.append(create_mdns_entry(ip, query, domain, subdomain))
+            else:
+                responses.append(create_dns_entry(ips, query, domain, subdomain))
+        elif use_mdns:
+            # Check For MDns
+            responses.append(resolve_mdns(qname, query, domain, subdomain))
         else:
-            response = create_dns_entry(ip, query, domain, subdomain)
-    elif use_mdns:
-        # Check For MDns
-        response = resolve_mdns(qname, query, domain, subdomain)
+            # External DNS Call
+            resolver = dns.resolver.Resolver()
+            resolvers = config.get("resolvers", [DEFAULT_DNS_RESOLVER])
+            resolver.nameservers = resolvers
+            try:
+                answer = resolver.resolve(qname, record_type)
+                ips = [rdata.address for rdata in answer]
+                responses.append(create_dns_entry(ips, query, domain, subdomain))
+                threading.Thread(target=sqlite_database.store_ips_in_db, args=(domain, subdomain, record_type, ips)).start()
+            except Exception as e:
+                logging.error(f"Error resolving {qname} for type {record_type}: {e}")
+    # Combine all responses into one DNS message if possible
+    if responses:
+        # Use the first response as the base and add all answers
+        base_response = dns.message.make_response(query)
+        for resp in responses:
+            for rrset in resp.answer:
+                base_response.answer.append(rrset)
+        return base_response
     else:
-        # External DNS Call
-        ip = get_ip_or_domain(qname)
-        resolvers = config.get("resolvers", [DEFAULT_DNS_RESOLVER])
-        resolver_ip = random.choice(resolvers) if resolvers else DEFAULT_DNS_RESOLVER
-        response = dns.query.udp(query, resolver_ip, timeout=3)
-        threading.Thread(target=sqlite_database.store_ip_in_db, args=(domain, subdomain, ip)).start()
-    return response
+        response = dns.message.make_response(query)
+        response.set_rcode(dns.rcode.SERVFAIL)
+        return response
