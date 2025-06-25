@@ -31,15 +31,15 @@ def resolve_mdns(ip_host, query, domain, subdomain=None):
     return response
 
 def create_mdns_entry(ip, query, domain, subdomain=None):
-    if sqlite_database.check_if_resolution_valid(domain, subdomain):
-        old_ip = sqlite_database.get_ip_from_db(domain, subdomain)
-        if str(old_ip) == str(ip):
-            ip = old_ip
+    if sqlite_database.check_if_resolution_valid(domain, subdomain, "A"):
+        old_ips = sqlite_database.get_ips_from_db(domain, subdomain, "A")
+        if str(ip) in [str(old_ip) for old_ip in old_ips]:
+            ip = str(ip)
 
     full_domain = f"{subdomain}.{domain}" if subdomain else domain
 
     response = dns.message.make_response(query)
     answer = create_dns_record(full_domain, 3600, ip)
     response.answer.append(answer)
-    threading.Thread(target=sqlite_database.store_ip_in_db, args=(domain, subdomain, ip)).start()
+    threading.Thread(target=sqlite_database.store_ips_in_db, args=(domain, subdomain, "A", [ip])).start()
     return response

@@ -84,6 +84,15 @@ def add_or_update_domain():
     ip = data.get("ip")
     subdomains = data.get("subdomains", {})
 
+    # Convert comma-separated IPs to list
+    if isinstance(ip, str) and ',' in ip:
+        ip = [i.strip() for i in ip.split(',')]
+
+    # Convert subdomain IPs to list if needed
+    for sub, sub_ip in subdomains.items():
+        if isinstance(sub_ip, str) and ',' in sub_ip:
+            subdomains[sub] = [i.strip() for i in sub_ip.split(',')]
+
     config = config_service.load_config(CONFIG_FILE)
 
     if "domains" not in config:
@@ -117,6 +126,11 @@ def add_or_update_subdomain():
     domain = data.get("domain")
     subdomain = data.get("subdomain")
     ip = data.get("ip")
+
+    # Convert comma-separated IPs to list
+    if isinstance(ip, str) and ',' in ip:
+        ip = [i.strip() for i in ip.split(',')]
+
     config = config_service.load_config(CONFIG_FILE)
 
     if "domains" not in config:

@@ -1,4 +1,3 @@
-import random
 import threading
 import dns.resolver
 import dns.message
@@ -14,6 +13,7 @@ import sqlite_database
 from services.upstream_dns_service import create_dns_entry
 from services.upstream_mdns_service import resolve_mdns, create_mdns_entry
 from services.utility_service import separate_domain_and_subdomain, get_ip_or_domain
+import subprocess
 
 # Logging setup
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -29,34 +29,110 @@ def handle_dns_query(data, client_address, config):
         logging.debug(f"Checking domain: {domain} against config")
         if qname == domain:
             logging.info(f"Exact match for domain: {domain}")
-            if config_data["ip"].endswith('.local'):
-                logging.info(f"Handling mDNS query for .local domain: {qname}")
-                response = resolve_mdns(config_data["ip"], query, domain)
+            ip_value = config_data["ip"]
+            ips = []
+            mdns_hosts = []
+            if isinstance(ip_value, list):
+                for ip in ip_value:
+                    if str(ip).endswith('.local'):
+                        mdns_hosts.append(ip)
+                    else:
+                        ips.append(ip)
+            else:
+                if str(ip_value).endswith('.local'):
+                    mdns_hosts.append(ip_value)
+                else:
+                    ips.append(ip_value)
+            # Resolve all mDNS hosts
+            for mdns_host in mdns_hosts:
+                try:
+                    result = subprocess.run(['avahi-resolve', '--name', mdns_host], capture_output=True, text=True)
+                    if result.returncode == 0:
+                        resolved_ip = result.stdout.strip().split('\t')[1]
+                        ips.append(resolved_ip)
+                    else:
+                        logging.error(f"Failed to resolve mDNS for {mdns_host}")
+                except Exception as e:
+                    logging.error(f"Exception during mDNS resolution for {mdns_host}: {e}")
+            if ips:
+                response = create_dns_entry(ips, query, domain)
+                threading.Thread(target=sqlite_database.store_ips_in_db, args=(domain, None, "A", ips)).start()
                 return response.to_wire()
             else:
-                response = create_dns_entry(config_data["ip"], query, domain)
+                response = dns.message.make_response(query)
+                response.set_rcode(dns.rcode.SERVFAIL)
                 return response.to_wire()
 
         if qname.endswith('.' + domain):
             subdomain = qname[:len(qname) - len(domain) - 1]
             if subdomain in config_data['subdomains']:
                 logging.info(f"Match found for subdomain: {subdomain} under domain: {domain}")
-                if config_data['subdomains'][subdomain].endswith('.local'):
-                    logging.info(f"Handling mDNS query for .local domain: {qname}")
-                    response = resolve_mdns(config_data['subdomains'][subdomain], query, domain, subdomain)
+                sub_value = config_data['subdomains'][subdomain]
+                ips = []
+                mdns_hosts = []
+                if isinstance(sub_value, list):
+                    for ip in sub_value:
+                        if str(ip).endswith('.local'):
+                            mdns_hosts.append(ip)
+                        else:
+                            ips.append(ip)
+                else:
+                    if str(sub_value).endswith('.local'):
+                        mdns_hosts.append(sub_value)
+                    else:
+                        ips.append(sub_value)
+                for mdns_host in mdns_hosts:
+                    try:
+                        result = subprocess.run(['avahi-resolve', '--name', mdns_host], capture_output=True, text=True)
+                        if result.returncode == 0:
+                            resolved_ip = result.stdout.strip().split('\t')[1]
+                            ips.append(resolved_ip)
+                        else:
+                            logging.error(f"Failed to resolve mDNS for {mdns_host}")
+                    except Exception as e:
+                        logging.error(f"Exception during mDNS resolution for {mdns_host}: {e}")
+                if ips:
+                    response = create_dns_entry(ips, query, domain, subdomain)
+                    threading.Thread(target=sqlite_database.store_ips_in_db, args=(domain, subdomain, "A", ips)).start()
                     return response.to_wire()
                 else:
-                    response = create_dns_entry(config_data['subdomains'][subdomain], query, domain, subdomain)
+                    response = dns.message.make_response(query)
+                    response.set_rcode(dns.rcode.SERVFAIL)
                     return response.to_wire()
             else:
                 if "*" in config_data['subdomains']:
                     logging.info(f"Star(*) Pattern Match found for subdomain: {subdomain} under domain: {domain}")
-                    if config_data['subdomains']['*'].endswith('.local'):
-                        logging.info(f"Handling mDNS query for .local domain: {qname}")
-                        response = resolve_mdns(config_data['subdomains']['*'], query, domain, subdomain)
+                    star_value = config_data['subdomains']['*']
+                    ips = []
+                    mdns_hosts = []
+                    if isinstance(star_value, list):
+                        for ip in star_value:
+                            if str(ip).endswith('.local'):
+                                mdns_hosts.append(ip)
+                            else:
+                                ips.append(ip)
+                    else:
+                        if str(star_value).endswith('.local'):
+                            mdns_hosts.append(star_value)
+                        else:
+                            ips.append(star_value)
+                    for mdns_host in mdns_hosts:
+                        try:
+                            result = subprocess.run(['avahi-resolve', '--name', mdns_host], capture_output=True, text=True)
+                            if result.returncode == 0:
+                                resolved_ip = result.stdout.strip().split('\t')[1]
+                                ips.append(resolved_ip)
+                            else:
+                                logging.error(f"Failed to resolve mDNS for {mdns_host}")
+                        except Exception as e:
+                            logging.error(f"Exception during mDNS resolution for {mdns_host}: {e}")
+                    if ips:
+                        response = create_dns_entry(ips, query, domain, subdomain)
+                        threading.Thread(target=sqlite_database.store_ips_in_db, args=(domain, subdomain, "A", ips)).start()
                         return response.to_wire()
                     else:
-                        response = create_dns_entry(config_data['subdomains']['*'], query, domain, subdomain)
+                        response = dns.message.make_response(query)
+                        response.set_rcode(dns.rcode.SERVFAIL)
                         return response.to_wire()
 
     try:
@@ -72,21 +148,43 @@ def handle_dns_query(data, client_address, config):
 def resolve_dns_entry(qname, query, config):
     subdomain, domain = separate_domain_and_subdomain(qname)
     use_mdns = qname.endswith('.local')
-    # Check For Cache
-    if sqlite_database.check_if_resolution_valid(domain, subdomain):
-        ip = sqlite_database.get_ip_from_db(domain, subdomain)
-        if use_mdns:
-            response = create_mdns_entry(ip, query, domain, subdomain)
+    # Determine query types requested
+    query_types = [q.rdtype for q in query.question]
+    responses = []
+    for qtype in query_types:
+        record_type = dns.rdatatype.to_text(qtype)
+        # Check For Cache
+        if sqlite_database.check_if_resolution_valid(domain, subdomain, record_type):
+            ips = sqlite_database.get_ips_from_db(domain, subdomain, record_type)
+            if use_mdns:
+                for ip in ips:
+                    responses.append(create_mdns_entry(ip, query, domain, subdomain))
+            else:
+                responses.append(create_dns_entry(ips, query, domain, subdomain))
+        elif use_mdns:
+            # Check For MDns
+            responses.append(resolve_mdns(qname, query, domain, subdomain))
         else:
-            response = create_dns_entry(ip, query, domain, subdomain)
-    elif use_mdns:
-        # Check For MDns
-        response = resolve_mdns(qname, query, domain, subdomain)
+            # External DNS Call
+            resolver = dns.resolver.Resolver()
+            resolvers = config.get("resolvers", [DEFAULT_DNS_RESOLVER])
+            resolver.nameservers = resolvers
+            try:
+                answer = resolver.resolve(qname, record_type)
+                ips = [rdata.address for rdata in answer]
+                responses.append(create_dns_entry(ips, query, domain, subdomain))
+                threading.Thread(target=sqlite_database.store_ips_in_db, args=(domain, subdomain, record_type, ips)).start()
+            except Exception as e:
+                logging.error(f"Error resolving {qname} for type {record_type}: {e}")
+    # Combine all responses into one DNS message if possible
+    if responses:
+        # Use the first response as the base and add all answers
+        base_response = dns.message.make_response(query)
+        for resp in responses:
+            for rrset in resp.answer:
+                base_response.answer.append(rrset)
+        return base_response
     else:
-        # External DNS Call
-        ip = get_ip_or_domain(qname)
-        resolvers = config.get("resolvers", [DEFAULT_DNS_RESOLVER])
-        resolver_ip = random.choice(resolvers) if resolvers else DEFAULT_DNS_RESOLVER
-        response = dns.query.udp(query, resolver_ip, timeout=3)
-        threading.Thread(target=sqlite_database.store_ip_in_db, args=(domain, subdomain, ip)).start()
-    return response
+        response = dns.message.make_response(query)
+        response.set_rcode(dns.rcode.SERVFAIL)
+        return response

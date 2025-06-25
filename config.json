@@ -5,10 +5,16 @@
   ],
   "domains": {
     "maxim.com": {
-      "ip": "maxim.local",
+      "ip": [
+        "maxim.local"
+      ],
       "subdomains": {
-        "unleash": "unleash.local",
-        "kafka": "kafka.local",
+        "unleash": [
+          "unleash.local"
+        ],
+        "kafka": [
+          "kafka.local"
+        ],
         "forgejo": "forgejo.local",
         "jenkins": "jenkins.local",
         "minio": "minio.local",
@@ -19,13 +25,11 @@
         "prometheus": "prometheus.local",
         "jaeger": "jaeger.local",
         "omv": "omv.local",
-        "*": "registry.local",
+        "*": [
+          "registry.local"
+        ],
         "database": "database.local"
       }
-    },
-    "netflix.com": {
-      "ip": "maxim.local",
-      "subdomains": {}
     }
   }
 }
