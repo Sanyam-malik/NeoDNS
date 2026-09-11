@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  neodns:
+    build: .
+    container_name: neodns
+    ports:
+      - "53:1053/udp"
+      - "80:8000"
+    volumes:
+      # Bind host Avahi & DBus sockets
+      - /var/run/dbus:/var/run/dbus
+      - /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket
+      - /etc/avahi:/etc/avahi:ro
+      - /var/lib/avahi:/var/lib/avahi
+
+    environment:
+      TZ: "UTC"
+
+    restart: always
+    networks:
+      - neodns_network
+
+networks:
+  neodns_network:
+    driver: bridge

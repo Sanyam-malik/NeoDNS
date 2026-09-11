@@ -1,0 +1,33 @@
+name: Sync NeoDNS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync-pkg-cacher:
+    name: Sync NeoDNS Repository & Image
+    runs-on: ubuntu
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push clean history to target repo
+        uses: actions/forgejo/repository-sync@v1
+        with:
+          remote_url: https://github.com/Sanyam-malik/NeoDNS.git
+          token: ${{ vars.GIT_TOKEN }}
+          user_name: Sanyam-malik
+          user_email: sanyammalik105@gmail.com
+      
+      - name: Push docker image to docker hub
+        uses: actions/forgejo/docker-sync@v1
+        with:
+          token: ${{ vars.GLOBAL_TOKEN }}
+          docker_registry: docker.io
+          docker_registry_namespace: sanyammalik
+          docker_registry_image: neodns
+          docker_registry_username: sanyammalik
+          docker_registry_token: ${{ vars.DOCKER_TOKEN }}

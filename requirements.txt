@@ -1,0 +1,7 @@
+dnspython
+fastapi
+uvicorn
+python-dotenv
+sqlalchemy
+mysql-connector-python
+psycopg2-binary

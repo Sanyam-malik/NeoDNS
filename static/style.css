@@ -1,0 +1,51 @@
+/* General Styling */
+body {
+    padding: 20px;
+    color: #fff;
+    animation: gradientBG 15s ease infinite;
+    background-size: 400% 400%;
+    min-height: 100vh;
+    transition: background 2s ease-in-out;
+}
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.form-inline input {
+    width: auto;
+    display: inline-block;
+}
+
+pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.subdomain-row input {
+    width: 100%;
+}
+
+.subdomain-table th,
+.subdomain-table td {
+    vertical-align: middle;
+}
+
+.accordion-button {
+    background-color: #f8f9fa;
+}
+
+#spinner-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050; /* above Bootstrap modals */
+}

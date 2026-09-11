@@ -1,0 +1,57 @@
+name: Build Docker Image
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  REGISTRY: ${{ vars.GLOBAL_REGISTRY }}
+  REGISTRY_API: https://${{ vars.GLOBAL_REGISTRY }}/api/v1
+
+jobs:
+  docker:
+    name: Build, Push, and Link Docker Image
+    runs-on: ubuntu
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Docker
+        uses: actions/forgejo/setup-docker@v1
+
+      - name: Compute image metadata
+        id: meta
+        uses: actions/forgejo/utils/set-image@v1
+
+      - name: Login to Docker Registry
+        uses: actions/forgejo/docker-login@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ vars.GLOBAL_USER }}
+          token: ${{ vars.GLOBAL_TOKEN }}
+
+      - name: Build Docker Image
+        uses: actions/forgejo/docker-multi-build@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          namespace: ${{ steps.meta.outputs.namespace }}
+          image: ${{ steps.meta.outputs.image }}
+
+      - name: Push Docker Image
+        uses: actions/forgejo/docker-push@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          namespace: ${{ steps.meta.outputs.namespace }}
+          image: ${{ steps.meta.outputs.image }}
+
+      - name: Link Docker Image
+        uses: actions/forgejo/link-docker-image@v1
+        with:
+          registry_api: ${{ env.REGISTRY_API }}
+          namespace: ${{ steps.meta.outputs.namespace }}
+          image: ${{ steps.meta.outputs.image }}
+          username: ${{ vars.GLOBAL_USER }}
+          token: ${{ vars.GLOBAL_TOKEN }}
